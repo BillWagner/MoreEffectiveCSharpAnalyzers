@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.24627.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoreEffectiveAnalyzers", "MoreEffectiveAnalyzers\MoreEffectiveAnalyzers\MoreEffectiveAnalyzers.csproj", "{9084AD0E-41A5-4C2D-BD4B-C2BC67EB6E40}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoreEffectiveAnalyzers.Test", "MoreEffectiveAnalyzers\MoreEffectiveAnalyzers.Test\MoreEffectiveAnalyzers.Test.csproj", "{809FE515-5B7A-48A3-BF9D-5BB8AF7D470A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoreEffectiveAnalyzers.Vsix", "MoreEffectiveAnalyzers\MoreEffectiveAnalyzers.Vsix\MoreEffectiveAnalyzers.Vsix.csproj", "{3C3625E2-85D5-4442-B2BA-36558A01C0CB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9084AD0E-41A5-4C2D-BD4B-C2BC67EB6E40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9084AD0E-41A5-4C2D-BD4B-C2BC67EB6E40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9084AD0E-41A5-4C2D-BD4B-C2BC67EB6E40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9084AD0E-41A5-4C2D-BD4B-C2BC67EB6E40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{809FE515-5B7A-48A3-BF9D-5BB8AF7D470A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{809FE515-5B7A-48A3-BF9D-5BB8AF7D470A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{809FE515-5B7A-48A3-BF9D-5BB8AF7D470A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{809FE515-5B7A-48A3-BF9D-5BB8AF7D470A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C3625E2-85D5-4442-B2BA-36558A01C0CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C3625E2-85D5-4442-B2BA-36558A01C0CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C3625E2-85D5-4442-B2BA-36558A01C0CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C3625E2-85D5-4442-B2BA-36558A01C0CB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
