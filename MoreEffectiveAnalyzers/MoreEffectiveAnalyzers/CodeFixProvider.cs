@@ -18,11 +18,11 @@ namespace MoreEffectiveAnalyzers
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(MoreEffectiveAnalyzersCodeFixProvider)), Shared]
     public class MoreEffectiveAnalyzersCodeFixProvider : CodeFixProvider
     {
-        private const string title = "Make uppercase";
+        private const string title = "Remove virtual keyword";
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create(MoreEffectiveAnalyzersAnalyzer.DiagnosticId); }
+            get { return ImmutableArray.Create(DeclareOnlyNonVirtualEventsAnalyzer.DiagnosticId); }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()
@@ -34,20 +34,31 @@ namespace MoreEffectiveAnalyzers
         {
             var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-            // TODO: Replace the following code with your own analysis, generating a CodeAction for each fix to suggest
             var diagnostic = context.Diagnostics.First();
             var diagnosticSpan = diagnostic.Location.SourceSpan;
 
             // Find the type declaration identified by the diagnostic.
-            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
+            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<EventFieldDeclarationSyntax>().First();
 
             // Register a code action that will invoke the fix.
             context.RegisterCodeFix(
                 CodeAction.Create(
                     title: title,
-                    createChangedSolution: c => MakeUppercaseAsync(context.Document, declaration, c),
+                    createChangedDocument: c => RemoveVirtualAsync(context.Document, declaration, c),
                     equivalenceKey: title),
                 diagnostic);
+        }
+
+        private async Task<Document> RemoveVirtualAsync(Document document, EventFieldDeclarationSyntax declaration, CancellationToken c)
+        {
+            var modifiers = declaration.Modifiers;
+            var virtualToken = modifiers.Single(m => m.Kind() == SyntaxKind.VirtualKeyword);
+
+
+            var root = await document.GetSyntaxRootAsync(c);
+            var newRoot = root.ReplaceToken(virtualToken, SyntaxFactory.Token(SyntaxKind.None));
+
+            return document.WithSyntaxRoot(newRoot);
         }
 
         private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)

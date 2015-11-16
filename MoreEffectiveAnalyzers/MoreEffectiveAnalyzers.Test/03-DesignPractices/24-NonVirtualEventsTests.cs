@@ -9,12 +9,12 @@ using MoreEffectiveAnalyzers;
 namespace MoreEffectiveAnalyzers.Test
 {
     [TestClass]
-    public class UnitTest : CodeFixVerifier
+    public class DeclareOnlyNonVirtualEventsTests : CodeFixVerifier
     {
 
         //No diagnostics expected to show up
         [TestMethod]
-        public void TestMethod1()
+        public void NoDiagnosticOnEmptySpan()
         {
             var test = @"";
 
@@ -23,49 +23,35 @@ namespace MoreEffectiveAnalyzers.Test
 
         //Diagnostic and CodeFix both triggered and checked for
         [TestMethod]
-        public void TestMethod2()
+        public void SuggestAndCreateFixOnVirtualEvent()
         {
-            var test = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
-
-    namespace ConsoleApplication1
+            var test = @"namespace VirtualEventTestCode
+{
+    public class Driver
     {
-        class TypeName
-        {   
-        }
-    }";
+        public virtual event EventHandler<EventArgs> OnVirtualEvent;
+    }
+}";
             var expected = new DiagnosticResult
             {
-                Id = "MoreEffectiveAnalyzers",
-                Message = String.Format("Type name '{0}' contains lowercase letters", "TypeName"),
+                Id = "MoreEffectiveAnalyzers-Item24",
+                Message = "Event 'OnVirtualEvent' should not be virtual",
                 Severity = DiagnosticSeverity.Warning,
                 Locations =
                     new[] {
-                            new DiagnosticResultLocation("Test0.cs", 11, 15)
+                            new DiagnosticResultLocation("Test0.cs", 5, 54)
                         }
             };
 
             VerifyCSharpDiagnostic(test, expected);
 
-            var fixtest = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
-
-    namespace ConsoleApplication1
+            var fixtest = @"namespace VirtualEventTestCode
+{
+    public class Driver
     {
-        class TYPENAME
-        {   
-        }
-    }";
+        public event EventHandler<EventArgs> OnVirtualEvent;
+    }
+}";
             VerifyCSharpFix(test, fixtest);
         }
 
@@ -76,7 +62,7 @@ namespace MoreEffectiveAnalyzers.Test
 
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
         {
-            return new MoreEffectiveAnalyzersAnalyzer();
+            return new DeclareOnlyNonVirtualEventsAnalyzer();
         }
     }
 }
