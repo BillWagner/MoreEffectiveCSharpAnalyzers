@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="MoreEffectiveAnalyzers.Vsix..7c6fb590-494a-44d9-8e4e-90c69c53bb89" Version="1.0" Language="en-US" Publisher="Bill Wagner"/>
+    <Identity Id="MoreEffectiveAnalyzers.Vsix..7c6fb590-494a-44d9-8e4e-90c69c53bb89" Version="1.0" Language="en-US" Publisher="billw"/>
     <DisplayName>MoreEffectiveAnalyzers.Vsix</DisplayName>
-    <Description xml:space="preserve">Analyzer that promotes the practices covered in More Effective CE</Description>
+    <Description xml:space="preserve">This is a sample diagnostic extension for the .NET Compiler Platform ("Roslyn").</Description>
   </Metadata>
   <Installation>
     <InstallationTarget Version="[14.0,]" Id="Microsoft.VisualStudio.Pro" />
