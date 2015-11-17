@@ -34,7 +34,7 @@ namespace MoreEffectiveAnalyzers.Test
 }";
             var expected = new DiagnosticResult
             {
-                Id = "MoreEffectiveAnalyzers-Item24",
+                Id = "MoreEffectiveAnalyzersItem24",
                 Message = "Event 'OnVirtualEvent' should not be virtual",
                 Severity = DiagnosticSeverity.Warning,
                 Locations =
