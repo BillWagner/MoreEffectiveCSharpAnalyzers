@@ -132,9 +132,11 @@ namespace MoreEffectiveAnalyzers
             var modifiers = declaration.Modifiers;
             var virtualToken = modifiers.Single(m => m.Kind() == SyntaxKind.VirtualKeyword);
 
-            var newDeclaration = declaration.ReplaceToken(virtualToken, Token(SyntaxKind.None))
-                .WithTrailingTrivia(TriviaList(CarriageReturnLineFeed));
-            newRoot = newRoot.ReplaceNode(declaration, newDeclaration).NormalizeWhitespace();
+            var newDeclaration = declaration.ReplaceToken(virtualToken, Token(SyntaxKind.None));
+            newRoot = newRoot.ReplaceNode(declaration, newDeclaration
+                .WithTrailingTrivia(TriviaList(CarriageReturnLineFeed, CarriageReturnLineFeed)))
+                //.NormalizeWhitespace()
+                ;
             return document.WithSyntaxRoot(newRoot);
 
         }
