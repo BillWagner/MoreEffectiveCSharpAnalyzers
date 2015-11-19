@@ -139,9 +139,60 @@ namespace MoreEffectiveAnalyzers.Test
             VerifyCSharpFix(test, fixtest);
         }
 
+        [TestMethod]
+        public void AddVirtualRaiseEventMethodForPropertyLikeEvent()
+        {
+            var test = @"namespace VirtualEventTestCode
+{
+    public class Driver
+    {
+        protected event EventHandler<EventArgs> eventField;
+
+        public virtual event EventHandler<EventArgs> OnVirtualEvent
+        {
+            add { eventField += value; }
+            remove { eventField -= value; }
+        }
+    }
+}";
+            var expected = new DiagnosticResult
+            {
+                Id = "MoreEffectiveAnalyzersItem24Property",
+                Message = "Event 'OnVirtualEvent' should not be virtual",
+                Severity = DiagnosticSeverity.Warning,
+                Locations =
+                    new[] {
+                            new DiagnosticResultLocation("Test0.cs", 7, 54)
+                        }
+            };
+
+            VerifyCSharpDiagnostic(test, expected);
+
+            var fixtest = @"namespace VirtualEventTestCode
+{
+    public class Driver
+    {
+        protected event EventHandler<EventArgs> eventField;
+
+        public event EventHandler<EventArgs> OnVirtualEvent
+        {
+            add { eventField += value; }
+            remove { eventField -= value; }
+        }
+
+        protected virtual EventArgs RaiseVirtualEvent(EventArgs args)
+        {
+            OnVirtualEvent?.Invoke(this, args);
+            return args;
+        }
+    }
+}";
+            VerifyCSharpFix(test, fixtest, 1);
+        }
+
         protected override CodeFixProvider GetCSharpCodeFixProvider()
         {
-            return new MoreEffectiveAnalyzersCodeFixProvider();
+            return new DeclareOnlyNonVirtuaEventsCodeFixProvider();
         }
 
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()

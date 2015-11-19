@@ -16,8 +16,8 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace MoreEffectiveAnalyzers
 {
-    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(MoreEffectiveAnalyzersCodeFixProvider)), Shared]
-    public class MoreEffectiveAnalyzersCodeFixProvider : CodeFixProvider
+    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(DeclareOnlyNonVirtuaEventsCodeFixProvider)), Shared]
+    public class DeclareOnlyNonVirtuaEventsCodeFixProvider : CodeFixProvider
     {
         private const string removeVirtualTitle = "Remove virtual keyword";
         private const string implementVirtualRaiseEvent = "Implement Virtual Method to Raise Event";
@@ -68,7 +68,6 @@ namespace MoreEffectiveAnalyzers
                 var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf()
                     .OfType<EventDeclarationSyntax>().First();
 
-
                 // Register a code action that will invoke the fix.
                 context.RegisterCodeFix(
                     CodeAction.Create(
@@ -76,8 +75,72 @@ namespace MoreEffectiveAnalyzers
                         createChangedDocument: c => RemoveVirtualEventPropertyAsync(context.Document, declaration, c),
                         equivalenceKey: removeVirtualTitle),
                     diagnostic);
+                context.RegisterCodeFix(
+                    CodeAction.Create(
+                        title: implementVirtualRaiseEvent,
+                        createChangedDocument: c => ImplementVirtualEventPropertyAsync(context.Document, declaration, c),
+                        equivalenceKey: implementVirtualRaiseEvent),
+                    diagnostic);
 
             }
+        }
+
+        private async Task<Document> ImplementVirtualEventPropertyAsync(Document document, EventDeclarationSyntax declaration, CancellationToken c)
+        {
+            var eventName = declaration.Identifier.ValueText;
+            var shortendEventName = eventName.Replace("On", "");
+            var argType = (declaration.Type as GenericNameSyntax);
+            var arg = (argType.TypeArgumentList.Arguments.First() as IdentifierNameSyntax);
+            var argTypeName = arg.Identifier.ValueText;
+            var raiseMethod = MethodDeclaration(arg, $"Raise{shortendEventName}")
+                .WithModifiers(TokenList(
+                    Token(SyntaxKind.ProtectedKeyword),
+                    Token(SyntaxKind.VirtualKeyword)))
+                .WithParameterList(
+                    ParameterList(SingletonSeparatedList<ParameterSyntax>(
+                        Parameter(Identifier(@"args"))
+                            .WithType(IdentifierName(@"EventArgs"))))
+                    .WithOpenParenToken(Token(SyntaxKind.OpenParenToken))
+                    .WithCloseParenToken(Token(SyntaxKind.CloseParenToken)))
+                .WithBody(Block(
+                    List<StatementSyntax>(
+                    new StatementSyntax[]{
+                        ExpressionStatement(
+                            ConditionalAccessExpression(
+                                IdentifierName(eventName),
+                                InvocationExpression(
+                                    MemberBindingExpression(IdentifierName(@"Invoke"))
+                                    .WithOperatorToken(Token(SyntaxKind.DotToken)))
+                                .WithArgumentList(ArgumentList(SeparatedList<ArgumentSyntax>(
+                                    new SyntaxNodeOrToken[]{
+                                        Argument(ThisExpression().WithToken(Token(SyntaxKind.ThisKeyword))),
+                                        Token(SyntaxKind.CommaToken),
+                                        Argument(IdentifierName(@"args"))
+                                    }))
+                                .WithOpenParenToken(Token(SyntaxKind.OpenParenToken))
+                                .WithCloseParenToken(Token(SyntaxKind.CloseParenToken))))
+                            .WithOperatorToken(Token(SyntaxKind.QuestionToken)))
+                            .WithSemicolonToken(Token(SyntaxKind.SemicolonToken)),
+                        ReturnStatement(IdentifierName(@"args"))
+                            .WithReturnKeyword(Token(SyntaxKind.ReturnKeyword))
+                            .WithSemicolonToken(Token(SyntaxKind.SemicolonToken))
+                    }))
+                .WithOpenBraceToken(Token(SyntaxKind.OpenBraceToken))
+                .WithCloseBraceToken(Token(SyntaxKind.CloseBraceToken)));
+
+            var root = await document.GetSyntaxRootAsync(c);
+            var newRoot = root.InsertNodesAfter(declaration, new SyntaxNode[] { raiseMethod });
+            // Note that we need to find the node again
+            declaration = newRoot.FindToken(declaration.Span.Start).Parent.AncestorsAndSelf()
+                .OfType<EventDeclarationSyntax>().First();
+
+            var modifiers = declaration.Modifiers;
+            var virtualToken = modifiers.Single(m => m.Kind() == SyntaxKind.VirtualKeyword);
+
+            var newDeclaration = declaration.ReplaceToken(virtualToken, Token(SyntaxKind.None));
+            newRoot = newRoot.ReplaceNode(declaration, newDeclaration
+                .WithTrailingTrivia(TriviaList(CarriageReturnLineFeed, CarriageReturnLineFeed)));
+            return document.WithSyntaxRoot(newRoot);
         }
 
         private async Task<Document> ImplementVirtualRaiseEventFieldAsync(Document document, EventFieldDeclarationSyntax declaration, CancellationToken c)
@@ -136,7 +199,6 @@ namespace MoreEffectiveAnalyzers
             newRoot = newRoot.ReplaceNode(declaration, newDeclaration
                 .WithTrailingTrivia(TriviaList(CarriageReturnLineFeed, CarriageReturnLineFeed)));
             return document.WithSyntaxRoot(newRoot);
-
         }
 
         private async Task<Document> RemoveVirtualEventPropertyAsync(Document document, EventDeclarationSyntax declaration, CancellationToken c)
