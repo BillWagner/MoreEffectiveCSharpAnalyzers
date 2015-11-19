@@ -22,7 +22,7 @@ namespace MoreEffectiveAnalyzers
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create(DeclareOnlyNonVirtualEventsAnalyzer.DiagnosticId); }
+            get { return ImmutableArray.Create(DeclareOnlyNonVirtualEventsAnalyzer.FieldEventDiagnosticId, DeclareOnlyNonVirtualEventsAnalyzer.PropertyEventDiagnosticId); }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()
@@ -38,18 +38,37 @@ namespace MoreEffectiveAnalyzers
             var diagnosticSpan = diagnostic.Location.SourceSpan;
 
             // Find the type declaration identified by the diagnostic.
-            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<EventFieldDeclarationSyntax>().First();
+            if (diagnostic.Id == DeclareOnlyNonVirtualEventsAnalyzer.FieldEventDiagnosticId)
+            {
+                var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf()
+                    .OfType<EventFieldDeclarationSyntax>().First();
 
-            // Register a code action that will invoke the fix.
-            context.RegisterCodeFix(
-                CodeAction.Create(
-                    title: title,
-                    createChangedDocument: c => RemoveVirtualAsync(context.Document, declaration, c),
-                    equivalenceKey: title),
-                diagnostic);
+
+                // Register a code action that will invoke the fix.
+                context.RegisterCodeFix(
+                    CodeAction.Create(
+                        title: title,
+                        createChangedDocument: c => RemoveVirtualEventFieldAsync(context.Document, declaration, c),
+                        equivalenceKey: title),
+                    diagnostic);
+            } else
+            {
+                var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf()
+                    .OfType<EventDeclarationSyntax>().First();
+
+
+                // Register a code action that will invoke the fix.
+                context.RegisterCodeFix(
+                    CodeAction.Create(
+                        title: title,
+                        createChangedDocument: c => RemoveVirtualEventPropertyAsync(context.Document, declaration, c),
+                        equivalenceKey: title),
+                    diagnostic);
+
+            }
         }
 
-        private async Task<Document> RemoveVirtualAsync(Document document, EventFieldDeclarationSyntax declaration, CancellationToken c)
+        private async Task<Document> RemoveVirtualEventPropertyAsync(Document document, EventDeclarationSyntax declaration, CancellationToken c)
         {
             var modifiers = declaration.Modifiers;
             var virtualToken = modifiers.Single(m => m.Kind() == SyntaxKind.VirtualKeyword);
@@ -61,23 +80,16 @@ namespace MoreEffectiveAnalyzers
             return document.WithSyntaxRoot(newRoot);
         }
 
-        private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private async Task<Document> RemoveVirtualEventFieldAsync(Document document, EventFieldDeclarationSyntax declaration, CancellationToken c)
         {
-            // Compute new uppercase name.
-            var identifierToken = typeDecl.Identifier;
-            var newName = identifierToken.Text.ToUpperInvariant();
+            var modifiers = declaration.Modifiers;
+            var virtualToken = modifiers.Single(m => m.Kind() == SyntaxKind.VirtualKeyword);
 
-            // Get the symbol representing the type to be renamed.
-            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
 
-            // Produce a new solution that has all references to that type renamed, including the declaration.
-            var originalSolution = document.Project.Solution;
-            var optionSet = originalSolution.Workspace.Options;
-            var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, typeSymbol, newName, optionSet, cancellationToken).ConfigureAwait(false);
+            var root = await document.GetSyntaxRootAsync(c);
+            var newRoot = root.ReplaceToken(virtualToken, SyntaxFactory.Token(SyntaxKind.None));
 
-            // Return the new solution with the now-uppercase type name.
-            return newSolution;
+            return document.WithSyntaxRoot(newRoot);
         }
     }
 }
