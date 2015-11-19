@@ -22,15 +22,9 @@ namespace MoreEffectiveAnalyzers
         private const string removeVirtualTitle = "Remove virtual keyword";
         private const string implementVirtualRaiseEvent = "Implement Virtual Method to Raise Event";
 
-        public sealed override ImmutableArray<string> FixableDiagnosticIds
-        {
-            get { return ImmutableArray.Create(DeclareOnlyNonVirtualEventsAnalyzer.FieldEventDiagnosticId, DeclareOnlyNonVirtualEventsAnalyzer.PropertyEventDiagnosticId); }
-        }
+        public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(DeclareOnlyNonVirtualEventsAnalyzer.FieldEventDiagnosticId, DeclareOnlyNonVirtualEventsAnalyzer.PropertyEventDiagnosticId);
 
-        public sealed override FixAllProvider GetFixAllProvider()
-        {
-            return WellKnownFixAllProviders.BatchFixer;
-        }
+        public sealed override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
 
         public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
         {
@@ -85,7 +79,7 @@ namespace MoreEffectiveAnalyzers
             }
         }
 
-        private async Task<Document> ImplementVirtualEventPropertyAsync(Document document, EventDeclarationSyntax declaration, CancellationToken c)
+        private async static Task<Document> ImplementVirtualEventPropertyAsync(Document document, EventDeclarationSyntax declaration, CancellationToken c)
         {
             var eventName = declaration.Identifier.ValueText;
             var shortendEventName = eventName.Replace("On", "");
@@ -143,7 +137,7 @@ namespace MoreEffectiveAnalyzers
             return document.WithSyntaxRoot(newRoot);
         }
 
-        private async Task<Document> ImplementVirtualRaiseEventFieldAsync(Document document, EventFieldDeclarationSyntax declaration, CancellationToken c)
+        private async static Task<Document> ImplementVirtualRaiseEventFieldAsync(Document document, EventFieldDeclarationSyntax declaration, CancellationToken c)
         {
             var eventName = declaration.Declaration.Variables.Single().Identifier.ValueText;
             var shortendEventName = eventName.Replace("On", "");
@@ -201,7 +195,7 @@ namespace MoreEffectiveAnalyzers
             return document.WithSyntaxRoot(newRoot);
         }
 
-        private async Task<Document> RemoveVirtualEventPropertyAsync(Document document, EventDeclarationSyntax declaration, CancellationToken c)
+        private async static Task<Document> RemoveVirtualEventPropertyAsync(Document document, EventDeclarationSyntax declaration, CancellationToken c)
         {
             var modifiers = declaration.Modifiers;
             var virtualToken = modifiers.Single(m => m.Kind() == SyntaxKind.VirtualKeyword);
@@ -213,7 +207,7 @@ namespace MoreEffectiveAnalyzers
             return document.WithSyntaxRoot(newRoot);
         }
 
-        private async Task<Document> RemoveVirtualEventFieldAsync(Document document, EventFieldDeclarationSyntax declaration, CancellationToken c)
+        private async static Task<Document> RemoveVirtualEventFieldAsync(Document document, EventFieldDeclarationSyntax declaration, CancellationToken c)
         {
             var modifiers = declaration.Modifiers;
             var virtualToken = modifiers.Single(m => m.Kind() == SyntaxKind.VirtualKeyword);

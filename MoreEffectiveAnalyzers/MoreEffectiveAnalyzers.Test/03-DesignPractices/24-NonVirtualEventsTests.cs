@@ -16,7 +16,7 @@ namespace MoreEffectiveAnalyzers.Test
         [TestMethod]
         public void NoDiagnosticOnEmptySpan()
         {
-            var test = @"";
+            const string test = @"";
 
             VerifyCSharpDiagnostic(test);
         }
@@ -25,7 +25,7 @@ namespace MoreEffectiveAnalyzers.Test
         [TestMethod]
         public void SuggestAndCreateFixOnVirtualFieldLikeEvent()
         {
-            var test = @"namespace VirtualEventTestCode
+            const string test = @"namespace VirtualEventTestCode
 {
     public class Driver
     {
@@ -45,7 +45,7 @@ namespace MoreEffectiveAnalyzers.Test
 
             VerifyCSharpDiagnostic(test, expected);
 
-            var fixtest = @"namespace VirtualEventTestCode
+            const string fixtest = @"namespace VirtualEventTestCode
 {
     public class Driver
     {
@@ -58,7 +58,7 @@ namespace MoreEffectiveAnalyzers.Test
         [TestMethod]
         public void AddVirtualRaiseEventMethodForFieldLikeEvents()
         {
-            var test = @"namespace VirtualEventTestCode
+            const string test = @"namespace VirtualEventTestCode
 {
     public class Driver
     {
@@ -78,7 +78,7 @@ namespace MoreEffectiveAnalyzers.Test
 
             VerifyCSharpDiagnostic(test, expected);
 
-            var fixtest = @"namespace VirtualEventTestCode
+            const string fixtest = @"namespace VirtualEventTestCode
 {
     public class Driver
     {
@@ -97,7 +97,7 @@ namespace MoreEffectiveAnalyzers.Test
         [TestMethod]
         public void SuggestAndCreateFixOnVirtualPropertyLikeEvent()
         {
-            var test = @"namespace VirtualEventTestCode
+            const string test = @"namespace VirtualEventTestCode
 {
     public class Driver
     {
@@ -123,7 +123,7 @@ namespace MoreEffectiveAnalyzers.Test
 
             VerifyCSharpDiagnostic(test, expected);
 
-            var fixtest = @"namespace VirtualEventTestCode
+            const string fixtest = @"namespace VirtualEventTestCode
 {
     public class Driver
     {
@@ -142,7 +142,7 @@ namespace MoreEffectiveAnalyzers.Test
         [TestMethod]
         public void AddVirtualRaiseEventMethodForPropertyLikeEvent()
         {
-            var test = @"namespace VirtualEventTestCode
+            const string test = @"namespace VirtualEventTestCode
 {
     public class Driver
     {
@@ -168,7 +168,7 @@ namespace MoreEffectiveAnalyzers.Test
 
             VerifyCSharpDiagnostic(test, expected);
 
-            var fixtest = @"namespace VirtualEventTestCode
+            const string fixtest = @"namespace VirtualEventTestCode
 {
     public class Driver
     {
@@ -190,14 +190,8 @@ namespace MoreEffectiveAnalyzers.Test
             VerifyCSharpFix(test, fixtest, 1);
         }
 
-        protected override CodeFixProvider GetCSharpCodeFixProvider()
-        {
-            return new DeclareOnlyNonVirtuaEventsCodeFixProvider();
-        }
+        protected override CodeFixProvider GetCSharpCodeFixProvider() => new DeclareOnlyNonVirtuaEventsCodeFixProvider();
 
-        protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
-        {
-            return new DeclareOnlyNonVirtualEventsAnalyzer();
-        }
+        protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() => new DeclareOnlyNonVirtualEventsAnalyzer();
     }
 }
