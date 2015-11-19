@@ -134,9 +134,7 @@ namespace MoreEffectiveAnalyzers
 
             var newDeclaration = declaration.ReplaceToken(virtualToken, Token(SyntaxKind.None));
             newRoot = newRoot.ReplaceNode(declaration, newDeclaration
-                .WithTrailingTrivia(TriviaList(CarriageReturnLineFeed, CarriageReturnLineFeed)))
-                //.NormalizeWhitespace()
-                ;
+                .WithTrailingTrivia(TriviaList(CarriageReturnLineFeed, CarriageReturnLineFeed)));
             return document.WithSyntaxRoot(newRoot);
 
         }
