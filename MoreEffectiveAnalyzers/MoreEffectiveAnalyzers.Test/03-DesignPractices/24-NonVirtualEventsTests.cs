@@ -182,7 +182,7 @@ namespace MoreEffectiveAnalyzers.Test
 
         protected virtual EventArgs RaiseVirtualEvent(EventArgs args)
         {
-            OnVirtualEvent?.Invoke(this, args);
+            eventField?.Invoke(this, args);
             return args;
         }
     }
