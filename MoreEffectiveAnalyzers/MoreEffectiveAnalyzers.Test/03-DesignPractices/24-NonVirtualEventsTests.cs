@@ -56,6 +56,45 @@ namespace MoreEffectiveAnalyzers.Test
         }
 
         [TestMethod]
+        public void AddVirtualRaiseEventMethodForFieldLikeEvents()
+        {
+            var test = @"namespace VirtualEventTestCode
+{
+    public class Driver
+    {
+        public virtual event EventHandler<EventArgs> OnVirtualEvent;
+    }
+}";
+            var expected = new DiagnosticResult
+            {
+                Id = "MoreEffectiveAnalyzersItem24Field",
+                Message = "Event 'OnVirtualEvent' should not be virtual",
+                Severity = DiagnosticSeverity.Warning,
+                Locations =
+                    new[] {
+                            new DiagnosticResultLocation("Test0.cs", 5, 54)
+                        }
+            };
+
+            VerifyCSharpDiagnostic(test, expected);
+
+            var fixtest = @"namespace VirtualEventTestCode
+{
+    public class Driver
+    {
+        public event EventHandler<EventArgs> OnVirtualEvent;
+
+        protected virtual EventArgs RaiseVirtualEvent(EventArgs args)
+        {
+            OnVirtualEvent?.Invoke(this, args);
+            return args;
+        }
+    }
+}";
+            VerifyCSharpFix(test, fixtest, 1);
+        }
+
+        [TestMethod]
         public void SuggestAndCreateFixOnVirtualPropertyLikeEvent()
         {
             var test = @"namespace VirtualEventTestCode
