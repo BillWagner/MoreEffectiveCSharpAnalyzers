@@ -20,10 +20,10 @@ namespace TestHelper
         private static readonly MetadataReference CSharpSymbolsReference = MetadataReference.CreateFromFile(typeof(CSharpCompilation).Assembly.Location);
         private static readonly MetadataReference CodeAnalysisReference = MetadataReference.CreateFromFile(typeof(Compilation).Assembly.Location);
 
-        internal static string DefaultFilePathPrefix = "Test";
-        internal static string CSharpDefaultFileExt = "cs";
-        internal static string VisualBasicDefaultExt = "vb";
-        internal static string TestProjectName = "TestProject";
+        internal static readonly string DefaultFilePathPrefix = @"Test";
+        internal static readonly string CSharpDefaultFileExt = "cs";
+        internal static readonly string VisualBasicDefaultExt = "vb";
+        internal static readonly string TestProjectName = "TestProject";
 
         #region  Get Diagnostics
 
@@ -34,10 +34,8 @@ namespace TestHelper
         /// <param name="language">The language the source classes are in</param>
         /// <param name="analyzer">The analyzer to be run on the sources</param>
         /// <returns>An IEnumerable of Diagnostics that surfaced in the source code, sorted by Location</returns>
-        private static Diagnostic[] GetSortedDiagnostics(string[] sources, string language, DiagnosticAnalyzer analyzer)
-        {
-            return GetSortedDiagnosticsFromDocuments(analyzer, GetDocuments(sources, language));
-        }
+        private static Diagnostic[] GetSortedDiagnostics(string[] sources, string language, DiagnosticAnalyzer analyzer) =>
+            GetSortedDiagnosticsFromDocuments(analyzer, GetDocuments(sources, language));
 
         /// <summary>
         /// Given an analyzer and a document to apply it to, run the analyzer and gather an array of diagnostics found in it.
@@ -67,9 +65,8 @@ namespace TestHelper
                     }
                     else
                     {
-                        for (int i = 0; i < documents.Length; i++)
+                        foreach(var document in documents)
                         {
-                            var document = documents[i];
                             var tree = document.GetSyntaxTreeAsync().Result;
                             if (tree == diag.Location.SourceTree)
                             {
@@ -90,10 +87,8 @@ namespace TestHelper
         /// </summary>
         /// <param name="diagnostics">The list of Diagnostics to be sorted</param>
         /// <returns>An IEnumerable containing the Diagnostics in order of Location</returns>
-        private static Diagnostic[] SortDiagnostics(IEnumerable<Diagnostic> diagnostics)
-        {
-            return diagnostics.OrderBy(d => d.Location.SourceSpan.Start).ToArray();
-        }
+        private static Diagnostic[] SortDiagnostics(IEnumerable<Diagnostic> diagnostics) =>
+            diagnostics.OrderBy(d => d.Location.SourceSpan.Start).ToArray();
 
         #endregion
 
@@ -128,10 +123,8 @@ namespace TestHelper
         /// <param name="source">Classes in the form of a string</param>
         /// <param name="language">The language the source code is in</param>
         /// <returns>A Document created from the source string</returns>
-        protected static Document CreateDocument(string source, string language = LanguageNames.CSharp)
-        {
-            return CreateProject(new[] { source }, language).Documents.First();
-        }
+        protected static Document CreateDocument(string source, string language = LanguageNames.CSharp) =>
+            CreateProject(new[] { source }, language).Documents.First();
 
         /// <summary>
         /// Create a project using the inputted strings as sources.
@@ -141,28 +134,31 @@ namespace TestHelper
         /// <returns>A Project created out of the Documents created from the source strings</returns>
         private static Project CreateProject(string[] sources, string language = LanguageNames.CSharp)
         {
-            string fileNamePrefix = DefaultFilePathPrefix;
-            string fileExt = language == LanguageNames.CSharp ? CSharpDefaultFileExt : VisualBasicDefaultExt;
+            var fileNamePrefix = DefaultFilePathPrefix;
+            var fileExt = language == LanguageNames.CSharp ? CSharpDefaultFileExt : VisualBasicDefaultExt;
 
             var projectId = ProjectId.CreateNewId(debugName: TestProjectName);
 
-            var solution = new AdhocWorkspace()
-                .CurrentSolution
-                .AddProject(projectId, TestProjectName, TestProjectName, language)
-                .AddMetadataReference(projectId, CorlibReference)
-                .AddMetadataReference(projectId, SystemCoreReference)
-                .AddMetadataReference(projectId, CSharpSymbolsReference)
-                .AddMetadataReference(projectId, CodeAnalysisReference);
-
-            int count = 0;
-            foreach (var source in sources)
+            using (var workspace = new AdhocWorkspace())
             {
-                var newFileName = fileNamePrefix + count + "." + fileExt;
-                var documentId = DocumentId.CreateNewId(projectId, debugName: newFileName);
-                solution = solution.AddDocument(documentId, newFileName, SourceText.From(source));
-                count++;
+                var solution = workspace
+                    .CurrentSolution
+                    .AddProject(projectId, TestProjectName, TestProjectName, language)
+                    .AddMetadataReference(projectId, CorlibReference)
+                    .AddMetadataReference(projectId, SystemCoreReference)
+                    .AddMetadataReference(projectId, CSharpSymbolsReference)
+                    .AddMetadataReference(projectId, CodeAnalysisReference);
+
+                var count = 0;
+                foreach (var source in sources)
+                {
+                    var newFileName = fileNamePrefix + count + "." + fileExt;
+                    var documentId = DocumentId.CreateNewId(projectId, debugName: newFileName);
+                    solution = solution.AddDocument(documentId, newFileName, SourceText.From(source));
+                    count++;
+                }
+                return solution.GetProject(projectId);
             }
-            return solution.GetProject(projectId);
         }
         #endregion
     }
