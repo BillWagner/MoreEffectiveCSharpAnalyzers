@@ -16,16 +16,16 @@ namespace MoreEffectiveAnalyzers.Test
         [TestMethod]
         public void NoDiagnosticOnEmptySpan()
         {
-            var test = @"";
+            const string test = @"";
 
             VerifyCSharpDiagnostic(test);
         }
 
         //Diagnostic and CodeFix both triggered and checked for
         [TestMethod]
-        public void SuggestAndCreateFixOnVirtualEvent()
+        public void SuggestAndCreateFixOnVirtualFieldLikeEvent()
         {
-            var test = @"namespace VirtualEventTestCode
+            const string test = @"namespace VirtualEventTestCode
 {
     public class Driver
     {
@@ -34,7 +34,7 @@ namespace MoreEffectiveAnalyzers.Test
 }";
             var expected = new DiagnosticResult
             {
-                Id = "MoreEffectiveAnalyzers-Item24",
+                Id = "MoreEffectiveAnalyzersItem24Field",
                 Message = "Event 'OnVirtualEvent' should not be virtual",
                 Severity = DiagnosticSeverity.Warning,
                 Locations =
@@ -45,7 +45,7 @@ namespace MoreEffectiveAnalyzers.Test
 
             VerifyCSharpDiagnostic(test, expected);
 
-            var fixtest = @"namespace VirtualEventTestCode
+            const string fixtest = @"namespace VirtualEventTestCode
 {
     public class Driver
     {
@@ -55,14 +55,143 @@ namespace MoreEffectiveAnalyzers.Test
             VerifyCSharpFix(test, fixtest);
         }
 
-        protected override CodeFixProvider GetCSharpCodeFixProvider()
+        [TestMethod]
+        public void AddVirtualRaiseEventMethodForFieldLikeEvents()
         {
-            return new MoreEffectiveAnalyzersCodeFixProvider();
+            const string test = @"namespace VirtualEventTestCode
+{
+    public class Driver
+    {
+        public virtual event EventHandler<EventArgs> OnVirtualEvent;
+    }
+}";
+            var expected = new DiagnosticResult
+            {
+                Id = "MoreEffectiveAnalyzersItem24Field",
+                Message = "Event 'OnVirtualEvent' should not be virtual",
+                Severity = DiagnosticSeverity.Warning,
+                Locations =
+                    new[] {
+                            new DiagnosticResultLocation("Test0.cs", 5, 54)
+                        }
+            };
+
+            VerifyCSharpDiagnostic(test, expected);
+
+            const string fixtest = @"namespace VirtualEventTestCode
+{
+    public class Driver
+    {
+        public event EventHandler<EventArgs> OnVirtualEvent;
+
+        protected virtual EventArgs RaiseVirtualEvent(EventArgs args)
+        {
+            OnVirtualEvent?.Invoke(this, args);
+            return args;
+        }
+    }
+}";
+            VerifyCSharpFix(test, fixtest, 1);
         }
 
-        protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
+        [TestMethod]
+        public void SuggestAndCreateFixOnVirtualPropertyLikeEvent()
         {
-            return new DeclareOnlyNonVirtualEventsAnalyzer();
+            const string test = @"namespace VirtualEventTestCode
+{
+    public class Driver
+    {
+        protected event EventHandler<EventArgs> eventField;
+
+        public virtual event EventHandler<EventArgs> OnVirtualEvent
+        {
+            add { eventField += value; }
+            remove { eventField -= value; }
         }
+    }
+}";
+            var expected = new DiagnosticResult
+            {
+                Id = "MoreEffectiveAnalyzersItem24Property",
+                Message = "Event 'OnVirtualEvent' should not be virtual",
+                Severity = DiagnosticSeverity.Warning,
+                Locations =
+                    new[] {
+                            new DiagnosticResultLocation("Test0.cs", 7, 54)
+                        }
+            };
+
+            VerifyCSharpDiagnostic(test, expected);
+
+            const string fixtest = @"namespace VirtualEventTestCode
+{
+    public class Driver
+    {
+        protected event EventHandler<EventArgs> eventField;
+
+        public event EventHandler<EventArgs> OnVirtualEvent
+        {
+            add { eventField += value; }
+            remove { eventField -= value; }
+        }
+    }
+}";
+            VerifyCSharpFix(test, fixtest);
+        }
+
+        [TestMethod]
+        public void AddVirtualRaiseEventMethodForPropertyLikeEvent()
+        {
+            const string test = @"namespace VirtualEventTestCode
+{
+    public class Driver
+    {
+        protected event EventHandler<EventArgs> eventField;
+
+        public virtual event EventHandler<EventArgs> OnVirtualEvent
+        {
+            add { eventField += value; }
+            remove { eventField -= value; }
+        }
+    }
+}";
+            var expected = new DiagnosticResult
+            {
+                Id = "MoreEffectiveAnalyzersItem24Property",
+                Message = "Event 'OnVirtualEvent' should not be virtual",
+                Severity = DiagnosticSeverity.Warning,
+                Locations =
+                    new[] {
+                            new DiagnosticResultLocation("Test0.cs", 7, 54)
+                        }
+            };
+
+            VerifyCSharpDiagnostic(test, expected);
+
+            const string fixtest = @"namespace VirtualEventTestCode
+{
+    public class Driver
+    {
+        protected event EventHandler<EventArgs> eventField;
+
+        public event EventHandler<EventArgs> OnVirtualEvent
+        {
+            add { eventField += value; }
+            remove { eventField -= value; }
+        }
+
+        protected virtual EventArgs RaiseVirtualEvent(EventArgs args)
+        {
+            eventField?.Invoke(this, args);
+            return args;
+        }
+    }
+}";
+            VerifyCSharpFix(test, fixtest, 1);
+        }
+
+        protected override CodeFixProvider GetCSharpCodeFixProvider() => new DeclareOnlyNonVirtuaEventsCodeFixProvider();
+
+        protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() => new DeclareOnlyNonVirtualEventsAnalyzer();
     }
 }
